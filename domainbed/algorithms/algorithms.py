@@ -1358,178 +1358,6 @@ class Fish(Algorithm):
         return self.network(x)
 
 
-
-class ERM_MONTE_PAIR_W(Algorithm):
-    """
-    Empirical Risk Minimization (ERM) with Monte Carlo Simulation for weights
-    """
-
-    def __init__(self, input_shape, num_classes, num_domains, hparams):
-        super(ERM_MONTE_PAIR_W, self).__init__(input_shape, num_classes, num_domains, hparams)
-        self.featurizer = networks.Featurizer(input_shape, self.hparams)
-        self.classifier = nn.Linear(self.featurizer.n_outputs, num_classes)
-        self.network = nn.Sequential(self.featurizer, self.classifier)
-        self.optimizer = get_optimizer(
-            hparams["optimizer"],
-            self.network.parameters(),
-            lr=self.hparams["lr"],
-            weight_decay=self.hparams["weight_decay"],
-        )
-        self.grad_fn = hparams["grad_fn"]
-        self.logdir = hparams["logdir"]
-        self.test_env = hparams["test_env"]
-
-        self.cos = nn.CosineSimilarity(dim=0)
-
-        self.neighborhoodSize = hparams["neighborhoodSize"]
-        self.out_dir = hparams["logdir"]
-        self.patience_limit = hparams["annealing_patience"]
-        self.patience_step = 0
-
-        # save start state
-        torch.save(self.network.state_dict(), self.out_dir / "network_start.pt")
-        # save best state
-        torch.save(self.network.state_dict(), self.out_dir / "network_best.pt")
-
-    def get_grads(self):
-        grads = []
-        for p in self.network.parameters():
-            grads.append(p.grad.data.clone().flatten())
-        return torch.cat(grads)
-
-    def set_grads(self, new_grads):
-        start = 0
-        for k, p in enumerate(self.network.parameters()):
-            dims = p.shape
-            end = start + dims.numel()
-            p.grad.data = new_grads[start:end].reshape(dims)
-            start = end
-
-    def update_monte_carlo(self, x, y, **kwargs):
-        """
-        Perform Monte Carlo Simulation for weights and update based on max average cosine similarity
-        between domain grads. The criterion can change.
-        For i in range(iterations):
-            # Step 1 --> Randomly add noise to weights to model parameters
-            # Step 2 --> Calculate domain grads
-            # Step 3 --> Calculate average cos similarity between domain grads and save
-            # Step 4 --> Save model weights (state_dict())
-        # Step 5 --> load weights of optimal parameters
-        # Step 6 --> update step (maybe not)
-        """
-
-        if self.patience_step == self.patience_limit:
-            return self.update(x, y)
-
-        # print("Beginning Monte Carlo Simulation")
-        self.network.load_state_dict(torch.load(self.out_dir / "network_start.pt"))
-
-        all_x = torch.cat(x)
-        all_y = torch.cat(y)
-
-        grads_i_v = []
-
-        for x_i, y_i in zip(x, y):
-            grads_i = []
-            # 1. Compute grad of domain batch
-            loss_i = F.cross_entropy(self.predict(x_i), y_i)
-
-            # 2. Flat and add domain grads to list
-            grad_i = autograd.grad(loss_i, self.network.parameters())
-            for g in grad_i:
-                grads_i.append(g.flatten())
-            grads_i_v.append(torch.cat(grads_i))
-
-        c = list(itertools.combinations(list(range(len(grads_i_v))), 2))
-
-        best_avg_sim = 0
-        start_loss = F.cross_entropy(self.predict(all_x), all_y)
-        for i, j in c:
-            best_avg_sim += self.cos(grads_i_v[i], grads_i_v[j])
-        best_avg_sim /= len(c)
-        best_crit = start_loss.item() - best_avg_sim
-
-        del start_loss
-        ##################
-        search_steps = 30
-        found_better = False
-        for step in range(search_steps):
-            # Perturb weights
-            start = 10
-            finish = 155
-            with torch.no_grad():
-                i = 0
-                for param in self.network.parameters():
-                    if start <= i <= finish:
-                        # param.add_(torch.randn(param.size()).cuda() * 0.1)
-
-                        # param.add_(torch.cuda.FloatTensor.normal_(0, 1))
-                        # param.add_(torch.Tensor(np.random.uniform(low=self.neighborhoodSize * -1,)))
-
-                        # param.add_(torch.FloatTensor(torch.normal(0, 1, size=param.shape)).cuda())
-
-                        param.add_(
-                            torch.Tensor(np.random.uniform(low=self.neighborhoodSize * -1, high=self.neighborhoodSize,
-                                                           size=param.shape)).cuda())
-                    i += 1
-
-            grads_i_v = []
-
-            for x_i, y_i in zip(x, y):
-                grads_i = []
-                # 1. Compute grad of domain batch
-                loss_i = F.cross_entropy(self.predict(x_i), y_i)
-
-                # 2. Flat and add domain grads to list
-                grad_i = autograd.grad(loss_i, self.network.parameters())
-                for g in grad_i:
-                    grads_i.append(g.flatten())
-                grads_i_v.append(torch.cat(grads_i))
-
-            c = list(itertools.combinations(list(range(len(grads_i_v))), 2))
-
-            avg_sim = 0
-            step_loss = F.cross_entropy(self.predict(all_x), all_y)
-            for i, j in c:
-                avg_sim += self.cos(grads_i_v[i], grads_i_v[j])
-            avg_sim /= len(c)
-            crit_step = step_loss.item() - avg_sim
-            if crit_step < best_crit:
-                best_crit = crit_step
-                best_avg_sim = avg_sim
-                found_better = True
-                self.patience_step = 0
-                torch.save(self.network.state_dict(), self.out_dir / "network_best.pt")
-
-            # self.network.load_state_dict(start_state)
-            self.network.load_state_dict(torch.load(self.out_dir / "network_start.pt"))
-
-        # self.network.load_state_dict(best_state)
-        self.network.load_state_dict(torch.load(self.out_dir / "network_best.pt"))
-        torch.save(self.network.state_dict(), self.out_dir / "network_start.pt")
-
-        loss = F.cross_entropy(self.predict(all_x), all_y)
-        self.optimizer.zero_grad()
-        loss.backward()
-
-        self.optimizer.step()
-
-        return {"loss": loss.item()}
-
-    def update(self, x, y, **kwargs):
-        all_x = torch.cat(x)
-        all_y = torch.cat(y)
-        loss = F.cross_entropy(self.predict(all_x), all_y)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        return {"loss": loss.item()}
-
-    def predict(self, x):
-        return self.network(x)
-
-
 ##### Imported from DomainBed
 class SelfReg(ERM):
     def __init__(self, input_shape, num_classes, num_domains, hparams):
@@ -1761,13 +1589,13 @@ class ERM_GGA(Algorithm):
         # Randomly perturb model parameters
         start = 10
         finish = 155
+        i = 0
         for param in self.network.parameters():
-            i = 0
             if start <= i <= finish:
                 param.data += torch.Tensor(np.random.uniform(low=(self.neighborhoodSize * -1) * self.P_T,
                                                          high=self.neighborhoodSize * self.P_T,
                                                          size=param.shape)).cuda()
-            i += 1
+                i += 1
 
     def save_best_weights(self):
         # Save the current best parameters
