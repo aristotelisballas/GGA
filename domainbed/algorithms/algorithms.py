@@ -1595,7 +1595,7 @@ class ERM_GGA(Algorithm):
                 param.data += torch.Tensor(np.random.uniform(low=(self.neighborhoodSize * -1) * self.P_T,
                                                          high=self.neighborhoodSize * self.P_T,
                                                          size=param.shape)).cuda()
-                i += 1
+            i += 1
 
     def save_best_weights(self):
         # Save the current best parameters
