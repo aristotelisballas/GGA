@@ -114,14 +114,12 @@ python train_all.py DN0 --dataset DomainNet --data_dir /my/datasets/path --deter
 Please cite this paper if it helps your research:
 
 ```
-@misc{ballas2025gradientguidedannealingdomaingeneralization,
-      title={Gradient-Guided Annealing for Domain Generalization}, 
-      author={Aristotelis Ballas and Christos Diou},
-      year={2025},
-      eprint={2502.20162},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2502.20162}, 
+@inproceedings{ballas2025gradient,
+  title={Gradient-Guided Annealing for Domain Generalization},
+  author={Ballas, Aristotelis and Diou, Christos},
+  booktitle={Proceedings of the Computer Vision and Pattern Recognition Conference},
+  pages={20558--20568},
+  year={2025}
 }
 ```
 
