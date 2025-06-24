@@ -1,6 +1,4 @@
 from .algorithms import *
-from .algorithms_gga import *
-
 
 def get_algorithm_class(algorithm_name):
     """Return the algorithm class with the given name."""
