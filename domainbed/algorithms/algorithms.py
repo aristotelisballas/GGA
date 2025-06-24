@@ -30,7 +30,6 @@ from domainbed.models.resnet_mixstyle2 import (
 
 from domainbed.sagm import SAGM, LinearScheduler, SAGM_CUSTOM
 from domainbed import gsam
-from domainbed.annealing import SimulatedAnnealing
 
 
 def to_minibatch(x, y):
