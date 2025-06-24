@@ -18,7 +18,6 @@ from domainbed import networks
 from domainbed.lib.gradient_utils import METHODS, get_method, agreement_mask
 from domainbed.lib.misc import random_pairs_of_minibatches, split_meta_train_test, ParamDict
 from domainbed.optimizers import get_optimizer
-from domainbed.pcgrad.pcgrad import PCGrad
 
 from domainbed.models.resnet_mixstyle import (
     resnet18_mixstyle_L234_p0d5_a0d1,
