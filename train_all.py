@@ -59,7 +59,7 @@ def main():
     parser.add_argument("--grad_fn", default="sum", help="Gradient Aggregation Function for SAM-DG")
     parser.add_argument("--train_output", default="train_output", help="train-output")
     parser.add_argument("--gamma", default=1.0, help="cos sim gamma ERM")
-    parser.add_argument("--neighborhoodSize", type=float, default=0.0005, help="neighborhoodSize for noise in params")
+    parser.add_argument("--neighborhoodSize", type=float, default=0.000001, help="neighborhoodSize for noise in params")
     parser.add_argument("--start_step", type=int, default=100, help="start step of the annealing")
     parser.add_argument("--end_step", type=int, default=150, help="end step of the annealing")
     parser.add_argument("--annealing_patience", type=int, default=5, help="patience for the annealing")
