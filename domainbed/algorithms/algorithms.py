@@ -1585,15 +1585,11 @@ class ERM_GGA(Algorithm):
 
     def perturb_weights(self, scale=0.0001):
         # Randomly perturb model parameters
-        start = 10
-        finish = 155
-        i = 0
-        for param in self.network.parameters():
-            if start <= i <= finish:
-                param.data += torch.Tensor(np.random.uniform(low=(self.neighborhoodSize * -1) * self.P_T,
-                                                         high=self.neighborhoodSize * self.P_T,
-                                                         size=param.shape)).cuda()
-            i += 1
+        with torch.no_grad():
+            for param in self.featurizer.parameters():
+                if param.requires_grad:
+                    noise = (torch.rand_like(param) * 2 - 1) * self.neighborhoodSize * self.P_T
+                    param.data += noise
 
     def save_best_weights(self):
         # Save the current best parameters
@@ -1722,13 +1718,13 @@ class ERM_GGA(Algorithm):
         return self.network(x)
 
 
-class ERM_GGA_STD(Algorithm):
+class GGA_L(Algorithm):
     """
-    GGA with added noise based on standard deviation of weights.
+    Empirical Risk Minimization (ERM) with Monte Carlo Simulation for weights
     """
 
     def __init__(self, input_shape, num_classes, num_domains, hparams):
-        super(ERM_GGA_STD, self).__init__(input_shape, num_classes, num_domains, hparams)
+        super(GGA_L, self).__init__(input_shape, num_classes, num_domains, hparams)
         self.featurizer = networks.Featurizer(input_shape, self.hparams)
         self.classifier = nn.Linear(self.featurizer.n_outputs, num_classes)
         self.network = nn.Sequential(self.featurizer, self.classifier)
@@ -1755,16 +1751,7 @@ class ERM_GGA_STD(Algorithm):
         self.best_params = None
         self.best_loss = float('inf')
 
-    def perturb_weights(self, scale=0.0001):
-        # Randomly perturb model parameters
-        start = 10
-        finish = 155
-        for param in self.network.parameters():
-            i = 0
-            if start <= i <= finish:
-                param.data += torch.randn_like(param) * (0.02 * torch.abs(param) + 0.001)
-
-            i += 1
+        self.gamma = hparams["gga_l_gamma"]
 
     def save_best_weights(self):
         # Save the current best parameters
@@ -1787,15 +1774,16 @@ class ERM_GGA_STD(Algorithm):
             grads_i_v.append(torch.cat([g.flatten() for g in grad_i]))
         return grads_i_v
 
-    def calculate_minimum_similarity(self, grads_i_v):
+    def calculate_similarity(self, grads_i_v):
         """
         Compute the average cosine similarity between domain gradients.
         """
         pairwise_combinations = list(itertools.combinations(range(len(grads_i_v)), 2))
 
         all_sims = [self.cos(grads_i_v[i], grads_i_v[j]) for i, j in pairwise_combinations]
-
-        return min(all_sims)
+        avg_sim = sum(all_sims) / len(pairwise_combinations)
+        # return min(all_sims)
+        return avg_sim
 
     def get_grads(self):
         grads = []
@@ -1811,71 +1799,35 @@ class ERM_GGA_STD(Algorithm):
             p.grad.data = new_grads[start:end].reshape(dims)
             start = end
 
-    def update_simulated_annealing(self, x, y, **kwargs):
-        """
-        Search for better weights by adding noise and accepting them based on the improvement of
-        the minimum domain pairwise gradient cosine similarity. The criterion can change.
-        For i in range(iterations):
-            # Step 1 --> Randomly add noise to weights to model parameters
-            # Step 2 --> Calculate domain grads
-            # Step 3 --> Calculate minimum pairwise cos similarity between domain grads and save
-            # Step 4 --> Save model weights (state_dict()) if improvement
-        # Step 5 --> load weights of optimal parameters
-        # Step 6 --> update step
-        """
-
+    def update_perturbed(self, x, y, **kwargs):
         all_x = torch.cat(x)
         all_y = torch.cat(y)
 
+        # Compute domain gradients
         grads_i_v = self.calculate_domain_gradients(x, y)
 
-        best_min_sim = self.calculate_minimum_similarity(grads_i_v)
-        current_loss = F.cross_entropy(self.predict(all_x), all_y).item()
+        # Compute min gradient similarity across domains
+        min_sim = self.calculate_similarity(grads_i_v)
 
-        # Save current state as best state before search
-        current_params = [param.data.clone() for param in self.network.parameters()]
-        self.save_best_weights()
-
-        ##################
-        search_steps = 30
-        best_search_loss = current_loss
-
-        for search_step in range(search_steps):
-            # Perturb weights
-            self.perturb_weights()
-
-            # Calculate domain grad sim in search
-            grads_i_v = self.calculate_domain_gradients(x, y)
-
-            step_min_sim = self.calculate_minimum_similarity(grads_i_v)
-
-            step_loss = F.cross_entropy(self.predict(all_x), all_y)
-            step_loss = step_loss.item()
-
-            # Calculate change in loss
-            delta_loss = step_loss - best_search_loss
-            delta_sim = best_min_sim - step_min_sim
-
-            # Accept or reject new params
-            if delta_loss < 0.1 and delta_sim < 0:
-                # Accept perturbed weights
-                best_min_sim = step_min_sim
-                best_search_loss = step_loss
-                self.save_best_weights()
-                with torch.no_grad():
-                    for param, original_param in zip(self.network.parameters(), current_params):
-                        param.data.copy_(original_param)
-
-        # Restore best weights (they may be original the params if search failed)
-        self.restore_best_weights()
-
+        # Compute loss and gradients
         loss = F.cross_entropy(self.predict(all_x), all_y)
         self.optimizer.zero_grad()
         loss.backward()
 
+        # Compute perturbation scale dynamically based on gradient similarity
+        alpha = self.gamma * (1 - min_sim)   # Adjust noise based on gradient alignment
+        # print(f"Alpha: {alpha}")
+        # Apply noise directly to gradients
+        with torch.no_grad():
+            for param in self.network.parameters():
+                if param.grad is not None:
+                    noise = torch.randn_like(param.grad) * alpha  # Scale noise adaptively
+                    param.grad.add_(noise)
+
+        # Perform optimizer step with modified gradients
         self.optimizer.step()
 
-        return {"loss": loss.item()}
+        return {"loss": loss.item(),}
 
     def update(self, x, y, **kwargs):
         all_x = torch.cat(x)
@@ -1891,4 +1843,3 @@ class ERM_GGA_STD(Algorithm):
 
     def predict(self, x):
         return self.network(x)
-

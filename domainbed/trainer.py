@@ -180,12 +180,15 @@ def train(test_envs, args, hparams, n_steps, checkpoint_freq, logger, writer, ta
 
         inputs = {**batches, "step": step}
 
-        if (args.algorithm in ["ERM_GGA", "ERM_GGA_STD"] and
+        if (args.algorithm in ["ERM_GGA"] and
                 (hparams["start_step"] <= step <= hparams["end_step"] or (hparams["extra_search"] ==
                                                                           "y" and hparams["extra_search_start"]
                                                                           <= step <= hparams["extra_search_end"]))):
 
             step_vals = algorithm.update_simulated_annealing(**inputs)
+
+        elif args.algorithm in ["GGA_L"]:
+            step_vals = algorithm.update_perturbed(**inputs)
 
         else:
             step_vals = algorithm.update(**inputs)

@@ -52,8 +52,7 @@ CUDA: 11.8
 `train_all.py` script conducts multiple leave-one-out cross-validations for all target domain.
 
 ```sh
-python train_all.py exp_name --dataset PACS --data_dir /my/datasets/path --trial_seed <seed> --algorithm <algorithm> --checkpoint_freq 100 --lr 3e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False
-
+python train_all.py exp_name --dataset <dataset> --data_dir /my/datasets/path --trial_seed <seed> --algorithm <algorithm> --checkpoint_freq 100 --lr <lr> --weight_decay 1e-4 --resnet_dropout 0.5 --swad False
 ```
 
 ### Run all experiments
@@ -65,14 +64,14 @@ Note that the difference in a detailed environment or uncontrolled randomness ma
 
 ```
 python train_all.py PACS0 --dataset PACS --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 3e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
---start_step 100 --end_step 150 --extra_search_start 1500 --extra_search_end 1550
+--start_step 100 --end_step 200 --neighborhoodSize 0.00001
 ```
 
 - VLCS
 
 ```
 python train_all.py VLCS0 --dataset VLCS --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
---start_step 100 --end_step 200
+--start_step 100 --end_step 200 --neighborhoodSize 0.000001
 ```
 
 - OfficeHome
@@ -86,21 +85,56 @@ python train_all.py OH0 --dataset OfficeHome --data_dir /my/datasets/path --dete
 
 ```
 python train_all.py TR0 --dataset TerraIncognita --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
---start_step 500 --end_step 600
+--start_step 100 --end_step 200 --neighborhoodSize 0.00001
 ```
 
 - DomainNet
 
 ```
 python train_all.py DN0 --dataset DomainNet --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 3e-5 --weight_decay 1e-6 --resnet_dropout 0.5 --swad False \
---start_step 100 --end_step 200
+--start_step 100 --end_step 200 --neighborhoodSize 0.00001
 ```
 
+## An Alternative Method for Gradient-Guided Annealing: GGA-L
+This repo also contains code for an alternative method to GGA, 
+which integrates noise directly into the gradient update step rather than modifying 
+weights separately. This alternative method is described in the Supplemntary Material of
+the [ArXiv](https://arxiv.org/abs/2502.20162) version of the manuscript.
 
-## Main Results
+Specifically in GGA-L, we propose injecting dynamic noise based on domain gradient similarity directly into the 
+update step, as follows:
+
 
 <p align="center">
-    <img src="./assets/results.png" width="80%" />
+    <img src="./assets/gga_l.png" width="50%" />
+</p>
+
+where ξ is noise drawn from a Uniform distribution and
+
+<p align="center">
+    <img src="./assets/gga_l2.png" width="50%" />
+</p>
+
+is a dynamic scaling factor depending on the average gradient similarity between domains and γ is a 
+hyperparameter controlling the noise intensity.
+
+Similar to above, you can run GGA-L as follows:
+
+```sh
+python train_all.py exp_name --dataset <dataset> --data_dir /my/datasets/path --trial_seed <seed> --algorithm GGA_L --checkpoint_freq 100 --lr <lr> --gga_l_gamma <gamma> --weight_decay 1e-4 --resnet_dropout 0.5 --swad False 
+```
+
+## Improvement over baseline results
+GGA is able to boost the performance of a vanilla model on all 5 datasets.
+<p align="center">
+    <img src="./assets/baseline_results.png" width="80%" />
+</p>
+
+## Improving the performance of SoTA algorithms
+When applied on top of previously proposed algorithms, GGA is able to boost their 
+performance in most cases.
+<p align="center">
+    <img src="./assets/sota_results.png" width="80%" />
 </p>
 
 ## Our searched HPs
@@ -109,6 +143,17 @@ python train_all.py DN0 --dataset DomainNet --data_dir /my/datasets/path --deter
     <img src="./assets/hp.png" width="80%" />
 </p>
 
+---
+**NOTICE**
+
+*We have identified and corrected several issues in the 
+original version of this paper, including errors in 
+both the manuscript and the accompanying code. We kindly 
+ask that any comparisons or future references be made 
+using the results and findings presented in the updated 
+[ArXiv](https://arxiv.org/abs/2502.20162) version.*
+
+---
 ## Citation
 
 Please cite this paper if it helps your research:
@@ -120,6 +165,16 @@ Please cite this paper if it helps your research:
   booktitle={Proceedings of the Computer Vision and Pattern Recognition Conference},
   pages={20558--20568},
   year={2025}
+}
+
+@misc{ballas2025gradientguidedannealingdomaingeneralization,
+      title={Gradient-Guided Annealing for Domain Generalization}, 
+      author={Aristotelis Ballas and Christos Diou},
+      year={2025},
+      eprint={2502.20162},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2502.20162}, 
 }
 ```
 

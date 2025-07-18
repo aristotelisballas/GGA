@@ -62,11 +62,11 @@ def main():
     parser.add_argument("--neighborhoodSize", type=float, default=0.000001, help="neighborhoodSize for noise in params")
     parser.add_argument("--start_step", type=int, default=100, help="start step of the annealing")
     parser.add_argument("--end_step", type=int, default=150, help="end step of the annealing")
-    parser.add_argument("--annealing_patience", type=int, default=5, help="patience for the annealing")
     parser.add_argument("--extra_search", default="n", help="search for extra steps further down")
     parser.add_argument("--batch_size", type=int, default="32", help="batch_size_test")
     parser.add_argument("--extra_search_start", type=int, default=None, help="end step of the annealing")
     parser.add_argument("--extra_search_end", type=int, default=None, help="end step of the annealing")
+    parser.add_argument("--gga_l_gamma", type=int, default=0.001, help="gamma hp for GGA_L")
 
     args, left_argv = parser.parse_known_args()
 
@@ -82,6 +82,7 @@ def main():
     hparams["batch_size"] = args.batch_size
     hparams["extra_search_start"] = args.extra_search_start
     hparams["extra_search_end"] = args.extra_search_end
+    hparams["gga_l_gamma"] = args.extra_search_end
 
     # setup debug
     if args.debug:
