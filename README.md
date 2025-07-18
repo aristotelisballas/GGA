@@ -63,28 +63,28 @@ Note that the difference in a detailed environment or uncontrolled randomness ma
 - PACS
 
 ```
-python train_all.py PACS0 --dataset PACS --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 3e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
+python train_all.py PACS0 --dataset PACS --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 3e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False \
 --start_step 100 --end_step 200 --neighborhoodSize 0.00001
 ```
 
 - VLCS
 
 ```
-python train_all.py VLCS0 --dataset VLCS --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
+python train_all.py VLCS1 --dataset VLCS --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False \
 --start_step 100 --end_step 200 --neighborhoodSize 0.000001
 ```
 
 - OfficeHome
 
 ```
-python train_all.py OH0 --dataset OfficeHome --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
+python train_all.py OH1 --dataset OfficeHome --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False \
 --start_step 100 --end_step 200
 ```
 
 - TerraIncognita
 
 ```
-python train_all.py TR0 --dataset TerraIncognita --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False --batch_size 48 \
+python train_all.py TR0 --dataset TerraIncognita --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False \
 --start_step 100 --end_step 200 --neighborhoodSize 0.00001
 ```
 
@@ -125,7 +125,8 @@ python train_all.py exp_name --dataset <dataset> --data_dir /my/datasets/path --
 ```
 
 ## Improvement over baseline results
-GGA is able to boost the performance of a vanilla model on all 5 datasets.
+GGA is able to boost the performance of a vanilla model on all 5 datasets.:wq
+
 <p align="center">
     <img src="./assets/baseline_results.png" width="80%" />
 </p>

@@ -58,7 +58,6 @@ def main():
     parser.add_argument("--prebuild_loader", action="store_true", help="Pre-build eval loaders")
     parser.add_argument("--grad_fn", default="sum", help="Gradient Aggregation Function for SAM-DG")
     parser.add_argument("--train_output", default="train_output", help="train-output")
-    parser.add_argument("--gamma", default=1.0, help="cos sim gamma ERM")
     parser.add_argument("--neighborhoodSize", type=float, default=0.000001, help="neighborhoodSize for noise in params")
     parser.add_argument("--start_step", type=int, default=100, help="start step of the annealing")
     parser.add_argument("--end_step", type=int, default=150, help="end step of the annealing")
@@ -80,9 +79,6 @@ def main():
     hparams["grad_fn"] = args.grad_fn
     hparams["extra_search"] = args.extra_search
     hparams["batch_size"] = args.batch_size
-    hparams["extra_search_start"] = args.extra_search_start
-    hparams["extra_search_end"] = args.extra_search_end
-    hparams["gga_l_gamma"] = args.extra_search_end
 
     # setup debug
     if args.debug:
@@ -104,20 +100,15 @@ def main():
     writer = get_writer(args.out_root / "runs" / args.unique_name)
     logger = Logger.get(args.out_dir / "log.txt")
 
-    ### Save scripts for tracking and reproducability
-    shutil.copyfile('./train_all.py', args.out_dir / "train_all.py")
-    shutil.copyfile('./domainbed/trainer.py', args.out_dir / "trainer.py")
-    shutil.copyfile('./domainbed/algorithms/algorithms.py', args.out_dir / "algorithms.py")
-    shutil.copyfile('./domainbed/algorithms/algorithms.py', args.out_dir / "algorithms_gga.py")
-    ###
-
     # My hparams
     hparams['logdir'] = args.out_dir
     hparams['gamma'] = args.gamma
     hparams['neighborhoodSize'] = float(args.neighborhoodSize)
     hparams['start_step'] = args.start_step
     hparams['end_step'] = args.end_step
-    hparams['annealing_patience'] = args.annealing_patience
+    hparams["extra_search_start"] = args.extra_search_start
+    hparams["extra_search_end"] = args.extra_search_end
+    hparams["gga_l_gamma"] = args.gga_l_gamma
     #
 
     if args.debug:

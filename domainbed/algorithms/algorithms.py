@@ -109,7 +109,6 @@ class ERM(Algorithm):
         self.test_env = hparams["test_env"]
 
         self.cos = nn.CosineSimilarity(dim=0)
-        self.gamma = hparams["gamma"]
 
     def get_grads(self):
         grads = []
@@ -1553,7 +1552,7 @@ class ANDMask(ERM):
 
 class ERM_GGA(Algorithm):
     """
-    Empirical Risk Minimization (ERM) with Monte Carlo Simulation for weights
+    Empirical Risk Minimization (ERM) with Gradient-Guided Annealing
     """
 
     def __init__(self, input_shape, num_classes, num_domains, hparams):
@@ -1720,7 +1719,7 @@ class ERM_GGA(Algorithm):
 
 class GGA_L(Algorithm):
     """
-    Empirical Risk Minimization (ERM) with Monte Carlo Simulation for weights
+    Empirical Risk Minimization (ERM) with GGA-L update.
     """
 
     def __init__(self, input_shape, num_classes, num_domains, hparams):
@@ -1751,7 +1750,7 @@ class GGA_L(Algorithm):
         self.best_params = None
         self.best_loss = float('inf')
 
-        self.gamma = hparams["gga_l_gamma"]
+        self.gga_l_gamma = hparams["gga_l_gamma"]
 
     def save_best_weights(self):
         # Save the current best parameters
@@ -1782,7 +1781,7 @@ class GGA_L(Algorithm):
 
         all_sims = [self.cos(grads_i_v[i], grads_i_v[j]) for i, j in pairwise_combinations]
         avg_sim = sum(all_sims) / len(pairwise_combinations)
-        # return min(all_sims)
+
         return avg_sim
 
     def get_grads(self):
@@ -1815,8 +1814,7 @@ class GGA_L(Algorithm):
         loss.backward()
 
         # Compute perturbation scale dynamically based on gradient similarity
-        alpha = self.gamma * (1 - min_sim)   # Adjust noise based on gradient alignment
-        # print(f"Alpha: {alpha}")
+        alpha = self.gga_l_gamma * (1 - min_sim)   # Adjust noise based on gradient alignment
         # Apply noise directly to gradients
         with torch.no_grad():
             for param in self.network.parameters():
