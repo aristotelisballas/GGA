@@ -116,7 +116,14 @@ where ξ is noise drawn from a Uniform distribution and
 </p>
 
 is a dynamic scaling factor depending on the average gradient similarity between domains and γ is a 
-hyperparameter controlling the noise intensity.
+hyperparameter controlling the noise intensity. 
+
+GGA-L is able to perform similarly to GGA but adds a considerably lower computational cost as the gradients for each domain are only calculated once per batch.
+The algorithm for GGA-L is the following:
+
+<p align="center">
+    <img src="./assets/gga_l_algo.png" width="50%" />
+</p>
 
 Similar to above, you can run GGA-L as follows:
 
