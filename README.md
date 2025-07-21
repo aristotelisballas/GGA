@@ -141,7 +141,7 @@ performance in most cases.
 ## Our searched HPs
 
 <p align="center">
-    <img src="./assets/hp.png" width="80%" />
+    <img src="./assets/hp.png" width="60%" />
 </p>
 
 ---
