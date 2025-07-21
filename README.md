@@ -78,7 +78,7 @@ python train_all.py VLCS1 --dataset VLCS --data_dir /my/datasets/path --determin
 
 ```
 python train_all.py OH1 --dataset OfficeHome --data_dir /my/datasets/path --deterministic --trial_seed 0 --algorithm ERM_GGA --checkpoint_freq 100 --lr 1e-5 --weight_decay 1e-4 --resnet_dropout 0.5 --swad False \
---start_step 100 --end_step 200
+--start_step 100 --end_step 200 --neighborhoodSize 0.00001
 ```
 
 - TerraIncognita
@@ -166,16 +166,6 @@ Please cite this paper if it helps your research:
   booktitle={Proceedings of the Computer Vision and Pattern Recognition Conference},
   pages={20558--20568},
   year={2025}
-}
-
-@misc{ballas2025gradientguidedannealingdomaingeneralization,
-      title={Gradient-Guided Annealing for Domain Generalization}, 
-      author={Aristotelis Ballas and Christos Diou},
-      year={2025},
-      eprint={2502.20162},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2502.20162}, 
 }
 ```
 
