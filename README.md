@@ -128,7 +128,7 @@ python train_all.py exp_name --dataset <dataset> --data_dir /my/datasets/path --
 GGA is able to boost the performance of a vanilla model on all 5 datasets.
 
 <p align="center">
-    <img src="./assets/baseline_results.png" width="80%" />
+    <img src="./assets/baseline_results.png" width="60%" />
 </p>
 
 ## Improving the performance of SoTA algorithms
