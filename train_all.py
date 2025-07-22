@@ -65,7 +65,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default="32", help="batch_size_test")
     parser.add_argument("--extra_search_start", type=int, default=None, help="end step of the annealing")
     parser.add_argument("--extra_search_end", type=int, default=None, help="end step of the annealing")
-    parser.add_argument("--gga_l_gamma", type=int, default=0.001, help="gamma hp for GGA_L")
+    parser.add_argument("--gga_l_gamma", type=float, default=0.001, help="gamma hp for GGA_L")
 
     args, left_argv = parser.parse_known_args()
 
