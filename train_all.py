@@ -102,7 +102,6 @@ def main():
 
     # My hparams
     hparams['logdir'] = args.out_dir
-    hparams['gamma'] = args.gamma
     hparams['neighborhoodSize'] = float(args.neighborhoodSize)
     hparams['start_step'] = args.start_step
     hparams['end_step'] = args.end_step
